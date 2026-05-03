@@ -632,11 +632,15 @@ function markInput(id, ok) {
 function validateStunting() {
   let ok = true;
   const h = parseFloat(document.getElementById("stunting_height").value);
-  const w = parseFloat(document.getElementById("stunting_weight").value);
-  const a = parseInt(document.getElementById("stunting_age").value);
 
-  if (h && (h < 30 || h > 130)) { showErr("height_err","Tinggi balita wajar: 30–130 cm"); markInput("stunting_height",false); ok=false; }
-  else { clearErr("height_err"); markInput("stunting_height",true); }
+  if (h && (h < 30 || h > 130)) {
+    showErr("height_err","Tinggi balita wajar: 30–130 cm");
+    markInput("stunting_height", false);
+    ok = false;
+  } else {
+    clearErr("height_err");
+    markInput("stunting_height", true);
+  }
 
   return ok;
 }
@@ -686,8 +690,8 @@ async function predict(type) {
     };
   }
 
-  setLoading(true);
   resetResult();
+  setLoading(true);
 
   try {
     const res  = await fetch(`/predict/${type}`, {
@@ -701,21 +705,21 @@ async function predict(type) {
     showResult(data);
     renderChart(type, data);
   } catch(e) {
-    alert("Error: " + e.message);
+    resetResult();
+    alert("❌ Error: " + e.message);
   } finally {
     setLoading(false);
   }
 }
 
 function setLoading(on) {
-  document.getElementById("emptyState").classList.toggle("hidden", on || lastResult);
+  document.getElementById("emptyState").classList.toggle("hidden", on);
   document.getElementById("loadingState").classList.toggle("hidden", !on);
   ["btnStunting","btnDiabetes"].forEach(id => {
     const b = document.getElementById(id);
     if (b) b.disabled = on;
   });
-  const texts = ["btnStuntingText","btnDiabetesText"];
-  texts.forEach(id => {
+  ["btnStuntingText","btnDiabetesText"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = on ? "Menganalisis…" : "Analisis Sekarang";
   });
@@ -723,6 +727,7 @@ function setLoading(on) {
 
 function resetResult() {
   document.getElementById("resultContent").classList.add("hidden");
+  document.getElementById("loadingState").classList.add("hidden");
   document.getElementById("emptyState").classList.remove("hidden");
   document.getElementById("chartCard").classList.add("hidden");
 }
