@@ -298,15 +298,7 @@
           </div>
 
           <!-- Weight -->
-          <div class="mb-5">
-            <label class="text-sm font-medium block mb-2">Berat Badan (kg)</label>
-            <div class="relative">
-              <i data-lucide="weight" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-              <input type="number" id="stunting_weight" placeholder="mis. 11.5"
-                class="form-input w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                oninput="validateStunting()" min="2" max="40" step="0.1">
-            </div>
-          </div>
+          <!-- DIHAPUS: Berat badan tidak digunakan oleh model stunting -->
 
           <!-- Sex -->
           <div class="mb-6">
@@ -339,73 +331,94 @@
             Data Pasien Diabetes
           </h3>
 
+          <!-- Demografi -->
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Demografi</p>
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="text-xs font-medium block mb-1.5 flex items-center gap-1">
-                Glukosa (mg/dL)
-                <span data-tip="Kadar gula darah. Normal: 70–140"><i data-lucide="help-circle" class="w-3 h-3 text-slate-400"></i></span>
-              </label>
-              <input type="number" id="d_glucose" placeholder="120"
-                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                oninput="validateDiabetes()" min="0" max="600">
-              <span id="glucose_err" class="hidden text-xs text-red-500"></span>
+              <label class="text-xs font-medium block mb-1.5">Jenis Kelamin</label>
+              <select id="d_gender"
+                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm">
+                <option value="">Pilih Gender</option>
+                <option value="1">Laki-laki</option>
+                <option value="0">Perempuan</option>
+              </select>
             </div>
+            <div>
+              <label class="text-xs font-medium block mb-1.5">Usia (Tahun)</label>
+              <input type="number" id="d_age" placeholder="Contoh: 45"
+                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
+                min="1" max="120">
+            </div>
+          </div>
+
+          <!-- Riwayat Medis -->
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Riwayat Medis</p>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="text-xs font-medium block mb-1.5">Hipertensi</label>
+              <select id="d_hypertension"
+                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm">
+                <option value="">Pilih Status</option>
+                <option value="0">Tidak</option>
+                <option value="1">Ya</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium block mb-1.5">Penyakit Jantung</label>
+              <select id="d_heart"
+                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm">
+                <option value="">Pilih Status</option>
+                <option value="0">Tidak</option>
+                <option value="1">Ya</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="text-xs font-medium block mb-1.5">Riwayat Merokok</label>
+            <select id="d_smoking"
+              class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm">
+              <option value="">Pilih Riwayat</option>
+              <option value="never">Tidak Pernah (never)</option>
+              <option value="former">Mantan Perokok (former)</option>
+              <option value="current">Perokok Aktif (current)</option>
+              <option value="ever">Pernah (ever)</option>
+              <option value="not current">Tidak Saat Ini (not current)</option>
+            </select>
+          </div>
+
+          <!-- Vitals & Labs -->
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Vitals &amp; Labs</p>
+          <div class="grid grid-cols-3 gap-3 mb-4">
             <div>
               <label class="text-xs font-medium block mb-1.5 flex items-center gap-1">
                 BMI (kg/m²)
                 <span data-tip="Indeks Massa Tubuh. Normal: 18.5–24.9"><i data-lucide="help-circle" class="w-3 h-3 text-slate-400"></i></span>
               </label>
-              <input type="number" id="d_bmi" placeholder="26.5"
+              <input type="number" id="d_bmi" placeholder="Cth: 25.5"
                 class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                oninput="validateDiabetes()" min="10" max="80" step="0.1">
-            </div>
-            <div>
-              <label class="text-xs font-medium block mb-1.5">Usia (tahun)</label>
-              <input type="number" id="d_age" placeholder="40"
-                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                oninput="validateDiabetes()" min="1" max="120">
+                min="10" max="80" step="0.1">
             </div>
             <div>
               <label class="text-xs font-medium block mb-1.5 flex items-center gap-1">
-                Tekanan Darah
-                <span data-tip="Tekanan darah diastolik (mmHg)"><i data-lucide="help-circle" class="w-3 h-3 text-slate-400"></i></span>
+                HbA1c Level (%)
+                <span data-tip="Normal: &lt;5.7%, Pradiabetes: 5.7–6.4%"><i data-lucide="help-circle" class="w-3 h-3 text-slate-400"></i></span>
               </label>
-              <input type="number" id="d_bp" placeholder="70"
+              <input type="number" id="d_hba1c" placeholder="Cth: 5.5"
                 class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                oninput="validateDiabetes()" min="0" max="200">
+                min="3" max="15" step="0.1">
             </div>
             <div>
               <label class="text-xs font-medium block mb-1.5 flex items-center gap-1">
-                Insulin (μU/mL)
-                <span data-tip="Kadar insulin. Normal: 2–25"><i data-lucide="help-circle" class="w-3 h-3 text-slate-400"></i></span>
+                Glukosa Darah
+                <span data-tip="Kadar gula darah (mg/dL). Normal: 70–140"><i data-lucide="help-circle" class="w-3 h-3 text-slate-400"></i></span>
               </label>
-              <input type="number" id="d_insulin" placeholder="80"
-                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                min="0" max="1000">
-            </div>
-            <div>
-              <label class="text-xs font-medium block mb-1.5 flex items-center gap-1">
-                Kehamilan (#)
-                <span data-tip="Jumlah kehamilan (wanita)"><i data-lucide="help-circle" class="w-3 h-3 text-slate-400"></i></span>
-              </label>
-              <input type="number" id="d_preg" placeholder="1"
-                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                min="0" max="20" value="0">
-            </div>
-            <div>
-              <label class="text-xs font-medium block mb-1.5">Ketebalan Kulit (mm)</label>
-              <input type="number" id="d_skin" placeholder="20"
-                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                min="0" max="100" value="20">
-            </div>
-            <div>
-              <label class="text-xs font-medium block mb-1.5 flex items-center gap-1">
-                DPF
-                <span data-tip="Diabetes Pedigree Function (riwayat keluarga)"><i data-lucide="help-circle" class="w-3 h-3 text-slate-400"></i></span>
-              </label>
-              <input type="number" id="d_dpf" placeholder="0.5"
-                class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                min="0" max="3" step="0.01" value="0.5">
+              <div class="relative">
+                <input type="number" id="d_glucose" placeholder="Cth: 120"
+                  class="form-input w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm pr-14"
+                  oninput="validateDiabetes()" min="0" max="600">
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">mg/dL</span>
+              </div>
+              <span id="glucose_err" class="hidden text-xs text-red-500"></span>
             </div>
           </div>
 
@@ -643,23 +656,34 @@ async function predict(type) {
   if (type === "stunting") {
     const age    = parseInt(document.getElementById("stunting_age").value);
     const height = parseFloat(document.getElementById("stunting_height").value);
-    const weight = parseFloat(document.getElementById("stunting_weight").value);
     const sex    = parseInt(document.querySelector('input[name="stunting_sex"]:checked').value);
-    if (!height || !weight) { alert("Lengkapi semua data balita!"); return; }
+    if (!height) { alert("Lengkapi data tinggi badan balita!"); return; }
     if (!validateStunting()) return;
-    payload = { age, height, weight, sex };
+    payload = { age, height, sex };
   } else {
-    const g  = parseFloat(document.getElementById("d_glucose").value);
-    const b  = parseFloat(document.getElementById("d_bmi").value);
-    const a  = parseFloat(document.getElementById("d_age").value);
-    const bp = parseFloat(document.getElementById("d_bp").value);
-    const i  = parseFloat(document.getElementById("d_insulin").value) || 80;
-    const p  = parseFloat(document.getElementById("d_preg").value) || 0;
-    const s  = parseFloat(document.getElementById("d_skin").value) || 20;
-    const d  = parseFloat(document.getElementById("d_dpf").value) || 0.5;
-    if (!g || !b || !a || !bp) { alert("Lengkapi data utama (Glukosa, BMI, Usia, Tekanan Darah)!"); return; }
+    const gender      = document.getElementById("d_gender").value;
+    const age         = parseFloat(document.getElementById("d_age").value);
+    const hypertension= document.getElementById("d_hypertension").value;
+    const heart       = document.getElementById("d_heart").value;
+    const smoking     = document.getElementById("d_smoking").value;
+    const bmi         = parseFloat(document.getElementById("d_bmi").value);
+    const hba1c       = parseFloat(document.getElementById("d_hba1c").value);
+    const glucose     = parseFloat(document.getElementById("d_glucose").value);
+
+    if (gender === "" || !age || hypertension === "" || heart === "" || smoking === "" || !bmi || !hba1c || !glucose) {
+      alert("Lengkapi semua data klinis diabetes!"); return;
+    }
     if (!validateDiabetes()) return;
-    payload = { glucose:g, bmi:b, age:a, blood_pressure:bp, insulin:i, pregnancies:p, skin_thickness:s, diabetes_pedigree:d };
+    payload = {
+      gender: parseInt(gender),
+      age,
+      hypertension: parseInt(hypertension),
+      heart_disease: parseInt(heart),
+      smoking_history: smoking,
+      bmi,
+      hba1c,
+      blood_glucose: glucose,
+    };
   }
 
   setLoading(true);
@@ -708,7 +732,9 @@ function showResult(data) {
   document.getElementById("resultContent").classList.remove("hidden");
 
   const conf = data.confidence;
-  const isPositive = data.prediction === 1;
+  // Positive/warning: stunting (pred 0 or 1), diabetes (pred 1)
+  const isPositive = (data.prediction === 1 || data.prediction === 0 && lastResult && lastResult.type === "Stunting Balita" && data.label !== "Normal" && data.label !== "Tinggi");
+  const isWarning  = data.label === "Stunted" || data.label === "Severely Stunted" || data.label === "Diabetes";
 
   // Gauge animation
   const arc = document.getElementById("gaugeArc");
@@ -721,7 +747,7 @@ function showResult(data) {
 
   // Badge
   const badge = document.getElementById("resultBadge");
-  if (isPositive) {
+  if (isWarning) {
     badge.className = "inline-flex items-center gap-2 px-5 py-2 rounded-2xl text-white font-syne font-bold text-lg mb-2 bg-gradient-to-r from-red-500 to-orange-500";
     badge.innerHTML = `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg> ${data.label}`;
   } else {
@@ -743,14 +769,14 @@ function renderChart(type, data) {
   let labels, userVals, normalVals, chartLabel;
 
   if (type === "stunting") {
-    labels    = ["Tinggi (cm)", "Berat (kg)", "Usia (bln)"];
-    userVals  = [data.inputs.height, data.inputs.weight, data.inputs.age];
-    normalVals= [85, 12, 24];
+    labels    = ["Tinggi (cm)", "Usia (bln)"];
+    userVals  = [data.inputs.height_cm, data.inputs.age_bulan];
+    normalVals= [85, 24];
     chartLabel= "Balita";
   } else {
-    labels    = ["Glukosa", "BMI", "Insulin"];
-    userVals  = [data.inputs.glucose, data.inputs.bmi, data.inputs.insulin];
-    normalVals= [100, 22, 80];
+    labels    = ["Glukosa (mg/dL)", "BMI", "HbA1c (%)"];
+    userVals  = [data.inputs.blood_glucose, data.inputs.bmi, data.inputs.HbA1c];
+    normalVals= [100, 22, 5.5];
     chartLabel= "Pasien";
   }
 

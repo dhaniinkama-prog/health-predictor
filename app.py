@@ -17,10 +17,10 @@ def load(name):
     return None
 
 model_stunting  = load("model_knn_stunting.pkl")
-scaler_stunting = load("scaler.pkl")
+scaler_stunting = load("scaler.pkl")        # fitur: Umur, Jenis Kelamin, Tinggi Badan (3 fitur)
 model_diabetes  = load("model_knn_diabetes.pkl")
-scaler_diabetes = load("scaler_1.pkl")
-le_diabetes     = load("le.pkl")
+scaler_diabetes = load("scaler_1.pkl")      # fitur: gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level, blood_glucose_level (8 fitur)
+le_smoking      = load("le.pkl")            # LabelEncoder untuk smoking_history
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.route("/")
@@ -33,40 +33,62 @@ def predict_stunting():
         data = request.get_json()
         age    = float(data["age"])          # bulan
         height = float(data["height"])       # cm
-        weight = float(data["weight"])       # kg
         sex    = int(data["sex"])            # 0=perempuan, 1=laki-laki
 
-        features = np.array([[age, height, weight, sex]])
+        # Urutan fitur sesuai scaler: Umur, Jenis Kelamin, Tinggi Badan
+        import pandas as pd
+        features = pd.DataFrame([[age, sex, height]],
+                                columns=["Umur", "Jenis Kelamin", "Tinggi Badan"])
 
         if model_stunting and scaler_stunting:
             features_scaled = scaler_stunting.transform(features)
             pred = int(model_stunting.predict(features_scaled)[0])
             try:
-                proba = float(model_stunting.predict_proba(features_scaled)[0][pred])
+                proba_arr = model_stunting.predict_proba(features_scaled)[0]
+                proba = float(proba_arr[pred])
             except Exception:
                 proba = 0.85
         else:
-            # Demo fallback — replace with real models
+            # Demo fallback
             haz = (height - (45 + age * 0.35)) / 4
             pred = 1 if haz < -2 else 0
             proba = 0.82
 
-        labels = {0: "Normal", 1: "Stunting"}
-        label  = labels.get(pred, str(pred))
+        # 4 kelas stunting WHO: 0=Severely Stunted, 1=Stunted, 2=Normal, 3=Tall
+        labels = {
+            0: "Severely Stunted",
+            1: "Stunted",
+            2: "Normal",
+            3: "Tinggi"
+        }
+        label = labels.get(pred, str(pred))
 
         tips_map = {
+            "Severely Stunted": [
+                "Segera bawa ke dokter atau ahli gizi anak.",
+                "Tingkatkan asupan protein: telur, ikan, daging, tahu/tempe.",
+                "Berikan suplemen zinc dan vitamin A sesuai anjuran dokter.",
+                "Pantau berat dan tinggi badan setiap bulan di Posyandu.",
+                "Pastikan sanitasi dan kebersihan lingkungan.",
+                "Ikuti program PMT (Pemberian Makanan Tambahan) di Puskesmas.",
+            ],
+            "Stunted": [
+                "Konsultasikan ke dokter atau ahli gizi.",
+                "Tingkatkan asupan protein dan kalsium harian.",
+                "Berikan suplemen zinc sesuai anjuran.",
+                "Pantau pertumbuhan secara rutin di Posyandu.",
+                "Pastikan imunisasi anak lengkap.",
+            ],
             "Normal": [
                 "Pertahankan pola makan bergizi seimbang.",
                 "Berikan ASI eksklusif hingga 6 bulan.",
                 "Pantau pertumbuhan secara rutin di Posyandu.",
                 "Pastikan imunisasi anak lengkap.",
             ],
-            "Stunting": [
-                "Segera konsultasikan ke dokter atau ahli gizi.",
-                "Tingkatkan asupan protein: telur, ikan, daging.",
-                "Berikan suplemen zinc dan vitamin A sesuai anjuran.",
-                "Pantau berat dan tinggi badan setiap bulan.",
-                "Pastikan sanitasi dan kebersihan lingkungan.",
+            "Tinggi": [
+                "Pertahankan pola makan dan gaya hidup sehat.",
+                "Pastikan asupan nutrisi tetap seimbang.",
+                "Lanjutkan pemantauan pertumbuhan rutin.",
             ],
         }
 
@@ -76,7 +98,7 @@ def predict_stunting():
             "label": label,
             "confidence": round(proba * 100, 1),
             "tips": tips_map.get(label, []),
-            "inputs": {"age": age, "height": height, "weight": weight, "sex": sex},
+            "inputs": {"age_bulan": age, "height_cm": height, "sex": "Laki-laki" if sex == 1 else "Perempuan"},
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -86,31 +108,44 @@ def predict_stunting():
 def predict_diabetes():
     try:
         data = request.get_json()
-        glucose    = float(data["glucose"])
-        bmi        = float(data["bmi"])
-        age        = float(data["age"])
-        insulin    = float(data["insulin"])
-        bp         = float(data["blood_pressure"])
-        pregnancies = float(data.get("pregnancies", 0))
-        skin       = float(data.get("skin_thickness", 20))
-        dpf        = float(data.get("diabetes_pedigree", 0.5))
+        # Fitur sesuai scaler_1.pkl: gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level, blood_glucose_level
+        gender           = int(data["gender"])              # 0=female, 1=male
+        age              = float(data["age"])
+        hypertension     = int(data["hypertension"])        # 0/1
+        heart_disease    = int(data["heart_disease"])       # 0/1
+        smoking_raw      = data["smoking_history"]          # string: 'never','former','current','ever','not current'
+        bmi              = float(data["bmi"])
+        hba1c            = float(data["hba1c"])
+        blood_glucose    = float(data["blood_glucose"])
 
-        features = np.array([[pregnancies, glucose, bp, skin, insulin, bmi, dpf, age]])
+        # Encode smoking history menggunakan le.pkl
+        # classes_: ['current' 'ever' 'former' 'never' 'not current']
+        if le_smoking:
+            try:
+                smoking_encoded = int(le_smoking.transform([smoking_raw])[0])
+            except Exception:
+                smoking_encoded = 3  # default 'never'
+        else:
+            smoking_map = {"current": 0, "ever": 1, "former": 2, "never": 3, "not current": 4}
+            smoking_encoded = smoking_map.get(smoking_raw, 3)
+
+        import pandas as pd
+        features = pd.DataFrame(
+            [[gender, age, hypertension, heart_disease, smoking_encoded, bmi, hba1c, blood_glucose]],
+            columns=["gender", "age", "hypertension", "heart_disease", "smoking_history",
+                     "bmi", "HbA1c_level", "blood_glucose_level"]
+        )
 
         if model_diabetes and scaler_diabetes:
             features_scaled = scaler_diabetes.transform(features)
-            pred_raw = model_diabetes.predict(features_scaled)[0]
-            if le_diabetes:
-                pred = int(le_diabetes.inverse_transform([pred_raw])[0])
-            else:
-                pred = int(pred_raw)
+            pred = int(model_diabetes.predict(features_scaled)[0])
             try:
                 proba = float(model_diabetes.predict_proba(features_scaled)[0][1])
             except Exception:
                 proba = 0.78
         else:
             # Demo fallback
-            score = (glucose / 200) * 0.5 + (bmi / 50) * 0.3 + (age / 80) * 0.2
+            score = (blood_glucose / 300) * 0.4 + (hba1c / 10) * 0.4 + (bmi / 50) * 0.2
             pred  = 1 if score > 0.45 else 0
             proba = min(score + 0.1, 0.99)
 
@@ -134,17 +169,22 @@ def predict_diabetes():
             ],
         }
 
-        risk_pct = round(proba * 100, 1)
-
+        gender_label = "Laki-laki" if gender == 1 else "Perempuan"
         return jsonify({
             "status": "ok",
             "prediction": pred,
             "label": label,
-            "confidence": risk_pct,
+            "confidence": round(proba * 100, 1),
             "tips": tips_map.get(label, []),
             "inputs": {
-                "glucose": glucose, "bmi": bmi, "age": age,
-                "blood_pressure": bp, "insulin": insulin,
+                "gender": gender_label,
+                "age": age,
+                "hypertension": "Ya" if hypertension else "Tidak",
+                "heart_disease": "Ya" if heart_disease else "Tidak",
+                "smoking": smoking_raw,
+                "bmi": bmi,
+                "HbA1c": hba1c,
+                "blood_glucose": blood_glucose,
             },
         })
     except Exception as e:
