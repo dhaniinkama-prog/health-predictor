@@ -276,16 +276,16 @@
             <div class="flex justify-between items-center mb-2">
               <label class="text-sm font-medium flex items-center gap-1">
                 Usia Balita (bulan)
-                <span data-tip="Usia dalam bulan, 0–59 bulan">
+                <span data-tip="Usia dalam bulan, 0–32 bulan">
                   <i data-lucide="help-circle" class="w-3.5 h-3.5 text-slate-400"></i>
                 </span>
               </label>
               <span id="ageVal" class="text-teal-500 font-bold text-sm">24 bulan</span>
             </div>
-            <input type="range" id="stunting_age" min="0" max="59" value="24" step="1"
+            <input type="range" id="stunting_age" min="0" max="32" value="24" step="1"
               class="w-full h-2 rounded-full"
               oninput="document.getElementById('ageVal').textContent=this.value+' bulan'; validateStunting()">
-            <div class="flex justify-between text-xs text-slate-400 mt-1"><span>0</span><span>59</span></div>
+            <div class="flex justify-between text-xs text-slate-400 mt-1"><span>0</span><span>32</span></div>
           </div>
 
           <!-- Height -->
@@ -293,9 +293,9 @@
             <label class="text-sm font-medium block mb-2">Tinggi Badan (cm)</label>
             <div class="relative">
               <i data-lucide="ruler" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-              <input type="number" id="stunting_height" placeholder="mis. 85"
+              <input type="number" id="stunting_height" placeholder="mis. 75"
                 class="form-input w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/60 dark:bg-slate-800/60 text-sm"
-                oninput="validateStunting()" min="30" max="130">
+                oninput="validateStunting()" min="45" max="100">
               <span id="height_err" class="hidden text-xs text-red-500 mt-1 block"></span>
             </div>
           </div>
@@ -636,8 +636,8 @@ function validateStunting() {
   let ok = true;
   const h = parseFloat(document.getElementById("stunting_height").value);
 
-  if (h && (h < 30 || h > 130)) {
-    showErr("height_err","Tinggi balita wajar: 30–130 cm");
+  if (h && (h < 45 || h > 100)) {
+    showErr("height_err","Tinggi balita: 45–100 cm");
     markInput("stunting_height", false);
     ok = false;
   } else {

@@ -35,6 +35,14 @@ def predict_stunting():
         height = float(data["height"])       # cm
         sex    = int(data["sex"])            # 0=perempuan, 1=laki-laki
 
+        # Validasi batas input
+        if age > 32:
+            return jsonify({"status": "error", "message": "Usia maksimal 32 bulan."}), 400
+        if height < 45:
+            return jsonify({"status": "error", "message": "Tinggi badan minimal 45 cm."}), 400
+        if height > 100:
+            return jsonify({"status": "error", "message": "Tinggi badan maksimal 100 cm."}), 400
+
         # Urutan fitur sesuai scaler: Umur, Jenis Kelamin, Tinggi Badan
         import pandas as pd
         features = pd.DataFrame([[age, sex, height]],
