@@ -33,7 +33,7 @@ def predict_stunting():
         data = request.get_json()
         age    = float(data["age"])          # bulan
         height = float(data["height"])       # cm
-        sex    = int(data["sex"])            # 0=perempuan, 1=laki-laki
+        sex    = int(data["sex"])            # LabelEncoder: laki-laki=0, perempuan=1
 
         # Validasi batas input
         if age > 32:
@@ -62,11 +62,11 @@ def predict_stunting():
             pred = 1 if haz < -2 else 0
             proba = 0.82
 
-        # 4 kelas stunting WHO: 0=Sangat Pendek, 1=Pendek, 2=Normal, 3=Tinggi
+        # LabelEncoder alfabetis: normal=0, severely stunted=1, stunted=2, tinggi=3
         labels = {
-            0: "Sangat Pendek",
-            1: "Pendek",
-            2: "Normal",
+            0: "Normal",
+            1: "Sangat Pendek",
+            2: "Pendek",
             3: "Tinggi"
         }
         label = labels.get(pred, str(pred))
@@ -106,7 +106,7 @@ def predict_stunting():
             "label": label,
             "confidence": round(proba * 100, 1),
             "tips": tips_map.get(label, []),
-            "inputs": {"age_bulan": age, "height_cm": height, "sex": "Laki-laki" if sex == 1 else "Perempuan"},
+            "inputs": {"age_bulan": age, "height_cm": height, "sex": "Laki-laki" if sex == 0 else "Perempuan"},
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
