@@ -62,17 +62,17 @@ def predict_stunting():
             pred = 1 if haz < -2 else 0
             proba = 0.82
 
-        # 4 kelas stunting WHO: 0=Severely Stunted, 1=Stunted, 2=Normal, 3=Tall
+        # 4 kelas stunting WHO: 0=Sangat Pendek, 1=Pendek, 2=Normal, 3=Tinggi
         labels = {
-            0: "Severely Stunted",
-            1: "Stunted",
+            0: "Sangat Pendek",
+            1: "Pendek",
             2: "Normal",
             3: "Tinggi"
         }
         label = labels.get(pred, str(pred))
 
         tips_map = {
-            "Severely Stunted": [
+            "Sangat Pendek": [
                 "Segera bawa ke dokter atau ahli gizi anak.",
                 "Tingkatkan asupan protein: telur, ikan, daging, tahu/tempe.",
                 "Berikan suplemen zinc dan vitamin A sesuai anjuran dokter.",
@@ -80,7 +80,7 @@ def predict_stunting():
                 "Pastikan sanitasi dan kebersihan lingkungan.",
                 "Ikuti program PMT (Pemberian Makanan Tambahan) di Puskesmas.",
             ],
-            "Stunted": [
+            "Pendek": [
                 "Konsultasikan ke dokter atau ahli gizi.",
                 "Tingkatkan asupan protein dan kalsium harian.",
                 "Berikan suplemen zinc sesuai anjuran.",

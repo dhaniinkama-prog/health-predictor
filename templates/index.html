@@ -546,7 +546,7 @@
           <i data-lucide="baby" class="w-6 h-6 text-teal-500"></i>
         </div>
         <h4 class="font-syne font-bold mb-2">Deteksi Stunting</h4>
-        <p class="text-sm text-slate-500 dark:text-slate-400">Menggunakan model KNN berbasis data usia, tinggi, berat, dan jenis kelamin balita (0–59 bulan) untuk mendeteksi risiko stunting.</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Menggunakan model KNN berbasis data usia, tinggi, berat, dan jenis kelamin balita (0–32 bulan) untuk mendeteksi risiko stunting dengan 4 kategori: Sangat Pendek, Pendek, Normal, dan Tinggi.</p>
       </div>
       <div class="glass rounded-3xl p-6 hover:-translate-y-1 transition-all">
         <div class="w-12 h-12 bg-sky-500/15 rounded-2xl flex items-center justify-center mb-4">
@@ -740,9 +740,6 @@ function showResult(data) {
   document.getElementById("resultContent").classList.remove("hidden");
 
   const conf = data.confidence;
-  // Positive/warning: stunting (pred 0 or 1), diabetes (pred 1)
-  const isPositive = (data.prediction === 1 || data.prediction === 0 && lastResult && lastResult.type === "Stunting Balita" && data.label !== "Normal" && data.label !== "Tinggi");
-  const isWarning  = data.label === "Stunted" || data.label === "Severely Stunted" || data.label === "Diabetes";
 
   // Gauge animation
   const arc = document.getElementById("gaugeArc");
@@ -753,15 +750,46 @@ function showResult(data) {
   const angle = -90 + (conf / 100) * 180;
   needle.setAttribute("transform", `rotate(${angle} 100 100)`);
 
-  // Badge
+  // Badge — warna per label
   const badge = document.getElementById("resultBadge");
-  if (isWarning) {
-    badge.className = "inline-flex items-center gap-2 px-5 py-2 rounded-2xl text-white font-syne font-bold text-lg mb-2 bg-gradient-to-r from-red-500 to-orange-500";
-    badge.innerHTML = `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg> ${data.label}`;
-  } else {
-    badge.className = "inline-flex items-center gap-2 px-5 py-2 rounded-2xl text-white font-syne font-bold text-lg mb-2 bg-gradient-to-r from-teal-500 to-green-500";
-    badge.innerHTML = `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> ${data.label}`;
-  }
+  const label = data.label;
+
+  const badgeConfig = {
+    // Stunting
+    "Sangat Pendek": {
+      cls: "bg-gradient-to-r from-red-600 to-red-400",
+      icon: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`
+    },
+    "Pendek": {
+      cls: "bg-gradient-to-r from-pink-500 to-pink-400",
+      icon: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`
+    },
+    "Normal": {
+      cls: "bg-gradient-to-r from-green-400 to-emerald-300",
+      icon: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`
+    },
+    "Tinggi": {
+      cls: "bg-gradient-to-r from-green-600 to-green-500",
+      icon: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`
+    },
+    // Diabetes
+    "Tidak Diabetes": {
+      cls: "bg-gradient-to-r from-teal-500 to-green-500",
+      icon: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`
+    },
+    "Diabetes": {
+      cls: "bg-gradient-to-r from-red-500 to-orange-500",
+      icon: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`
+    },
+  };
+
+  const cfg = badgeConfig[label] || {
+    cls: "bg-gradient-to-r from-slate-500 to-slate-400",
+    icon: `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`
+  };
+
+  badge.className = `inline-flex items-center gap-2 px-5 py-2 rounded-2xl text-white font-syne font-bold text-lg mb-2 ${cfg.cls}`;
+  badge.innerHTML = `${cfg.icon} ${label}`;
 
   document.getElementById("confText").textContent = conf + "%";
 
