@@ -36,37 +36,42 @@ def predict_stunting():
         sex    = int(data["sex"])            # LabelEncoder: laki-laki=0, perempuan=1
 
         # Validasi batas input
-        if age > 32:
-            return jsonify({"status": "error", "message": "Usia maksimal 32 bulan."}), 400
+        if age < 0 or age > 32:
+            return jsonify({"status": "error", "message": "Usia harus antara 0–32 bulan."}), 400
         if height < 45:
             return jsonify({"status": "error", "message": "Tinggi badan minimal 45 cm."}), 400
         if height > 100:
             return jsonify({"status": "error", "message": "Tinggi badan maksimal 100 cm."}), 400
+        if sex not in (0, 1):
+            return jsonify({"status": "error", "message": "Jenis kelamin tidak valid (0=laki-laki, 1=perempuan)."}), 400
+
+        # Pastikan model sudah termuat — TIDAK ada fallback manual
+        if not model_stunting or not scaler_stunting:
+            return jsonify({
+                "status": "error",
+                "message": "Model stunting belum dimuat. Pastikan file model_knn_stunting.pkl dan scaler.pkl ada di folder models/."
+            }), 503
 
         # Urutan fitur sesuai scaler: Umur, Jenis Kelamin, Tinggi Badan
         import pandas as pd
         features = pd.DataFrame([[age, sex, height]],
                                 columns=["Umur", "Jenis Kelamin", "Tinggi Badan"])
 
-        if model_stunting and scaler_stunting:
-            features_scaled = scaler_stunting.transform(features)
-            pred = int(model_stunting.predict(features_scaled)[0])
-            try:
-                proba_arr = model_stunting.predict_proba(features_scaled)[0]
-                proba = float(proba_arr[pred])
-            except Exception:
-                proba = 0.85
-        else:
-            # Demo fallback
-            haz = (height - (45 + age * 0.35)) / 4
-            pred = 1 if haz < -2 else 0
-            proba = 0.82
+        features_scaled = scaler_stunting.transform(features)
+        pred = int(model_stunting.predict(features_scaled)[0])
+        try:
+            proba_arr = model_stunting.predict_proba(features_scaled)[0]
+            proba = float(proba_arr[pred])
+        except Exception:
+            proba = None
 
-        # LabelEncoder alfabetis: normal=0, severely stunted=1, stunted=2, tinggi=3
+        # LabelEncoder urutan alfabetis scikit-learn dari nama kelas asli dataset:
+        # 'normal'=0, 'severely stunted'=1, 'stunted'=2, 'tinggi'=3
+        # Mapping ke label Indonesia:
         labels = {
             0: "Normal",
-            1: "Sangat Pendek",
-            2: "Pendek",
+            1: "Sangat Pendek",   # severely stunted
+            2: "Pendek",          # stunted
             3: "Tinggi"
         }
         label = labels.get(pred, str(pred))
@@ -104,7 +109,7 @@ def predict_stunting():
             "status": "ok",
             "prediction": pred,
             "label": label,
-            "confidence": round(proba * 100, 1),
+            "confidence": round(proba * 100, 1) if proba is not None else None,
             "tips": tips_map.get(label, []),
             "inputs": {"age_bulan": age, "height_cm": height, "sex": "Laki-laki" if sex == 0 else "Perempuan"},
         })
@@ -126,6 +131,29 @@ def predict_diabetes():
         hba1c            = float(data["hba1c"])
         blood_glucose    = float(data["blood_glucose"])
 
+        # Validasi input
+        if age < 1 or age > 120:
+            return jsonify({"status": "error", "message": "Usia harus antara 1–120 tahun."}), 400
+        if bmi < 10 or bmi > 80:
+            return jsonify({"status": "error", "message": "BMI harus antara 10–80."}), 400
+        if hba1c < 3 or hba1c > 15:
+            return jsonify({"status": "error", "message": "HbA1c harus antara 3–15%."}), 400
+        if blood_glucose < 0 or blood_glucose > 600:
+            return jsonify({"status": "error", "message": "Glukosa darah harus antara 0–600 mg/dL."}), 400
+        if hypertension not in (0, 1):
+            return jsonify({"status": "error", "message": "Hipertensi: nilai 0 atau 1."}), 400
+        if heart_disease not in (0, 1):
+            return jsonify({"status": "error", "message": "Penyakit jantung: nilai 0 atau 1."}), 400
+        if gender not in (0, 1):
+            return jsonify({"status": "error", "message": "Gender tidak valid."}), 400
+
+        # Pastikan model sudah termuat — TIDAK ada fallback manual
+        if not model_diabetes or not scaler_diabetes:
+            return jsonify({
+                "status": "error",
+                "message": "Model diabetes belum dimuat. Pastikan file model_knn_diabetes.pkl dan scaler_1.pkl ada di folder models/."
+            }), 503
+
         # Encode smoking history menggunakan le.pkl
         # classes_: ['current' 'ever' 'former' 'never' 'not current']
         if le_smoking:
@@ -144,18 +172,12 @@ def predict_diabetes():
                      "bmi", "HbA1c_level", "blood_glucose_level"]
         )
 
-        if model_diabetes and scaler_diabetes:
-            features_scaled = scaler_diabetes.transform(features)
-            pred = int(model_diabetes.predict(features_scaled)[0])
-            try:
-                proba = float(model_diabetes.predict_proba(features_scaled)[0][1])
-            except Exception:
-                proba = 0.78
-        else:
-            # Demo fallback
-            score = (blood_glucose / 300) * 0.4 + (hba1c / 10) * 0.4 + (bmi / 50) * 0.2
-            pred  = 1 if score > 0.45 else 0
-            proba = min(score + 0.1, 0.99)
+        features_scaled = scaler_diabetes.transform(features)
+        pred = int(model_diabetes.predict(features_scaled)[0])
+        try:
+            proba = float(model_diabetes.predict_proba(features_scaled)[0][1])
+        except Exception:
+            proba = None
 
         labels = {0: "Tidak Diabetes", 1: "Diabetes"}
         label  = labels.get(pred, str(pred))
@@ -182,7 +204,7 @@ def predict_diabetes():
             "status": "ok",
             "prediction": pred,
             "label": label,
-            "confidence": round(proba * 100, 1),
+            "confidence": round(proba * 100, 1) if proba is not None else None,
             "tips": tips_map.get(label, []),
             "inputs": {
                 "gender": gender_label,
