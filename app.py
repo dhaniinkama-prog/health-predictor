@@ -19,8 +19,8 @@ def load(name):
 model_stunting  = load("model_knn_stunting(1).pkl")
 scaler_stunting = load("scaler(2).pkl")        # fitur: Umur, Jenis Kelamin, Tinggi Badan (3 fitur)
 model_diabetes  = load("model_knn_diabetes.pkl")
-scaler_diabetes = load("scaler_1.pkl")      # fitur: gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level, blood_glucose_level (8 fitur)
-le_smoking      = load("le.pkl")            # LabelEncoder untuk smoking_history
+scaler_diabetes = load("scaler_1.pkl")         # fitur: gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level, blood_glucose_level (8 fitur)
+le_smoking      = load("le.pkl")               # LabelEncoder untuk smoking_history
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.route("/")
@@ -30,10 +30,10 @@ def index():
 @app.route("/predict/stunting", methods=["POST"])
 def predict_stunting():
     try:
-        data = request.get_json()
-        age    = float(data["age"])          # bulan
-        height = float(data["height"])       # cm
-        sex    = int(data["sex"])            # LabelEncoder: laki-laki=0, perempuan=1
+        data   = request.get_json()
+        age    = float(data["age"])     # bulan
+        height = float(data["height"]) # cm
+        sex    = int(data["sex"])       # 0=laki-laki, 1=perempuan
 
         # Validasi batas input
         if age < 0 or age > 32:
@@ -45,18 +45,61 @@ def predict_stunting():
         if sex not in (0, 1):
             return jsonify({"status": "error", "message": "Jenis kelamin tidak valid (0=laki-laki, 1=perempuan)."}), 400
 
-        # Pastikan model sudah termuat — TIDAK ada fallback manual
         if not model_stunting or not scaler_stunting:
             return jsonify({
                 "status": "error",
-                "message": "Model stunting belum dimuat. Pastikan file model_knn_stunting.pkl dan scaler.pkl ada di folder models/."
+                "message": "Model stunting belum dimuat. Pastikan file model_knn_stunting(1).pkl dan scaler(2).pkl ada di folder models/."
             }), 503
 
-        # Urutan fitur sesuai scaler: Umur, Jenis Kelamin, Tinggi Badan
         import pandas as pd
+
+        # ── WHO Height-for-Age: median & SD per bulan ────────────────────────
+        # Sumber: WHO Child Growth Standards
+        who_boys = {
+            0:  (49.9, 1.9), 1:  (54.7, 2.0), 2:  (58.4, 2.1), 3:  (61.4, 2.1),
+            4:  (63.9, 2.2), 5:  (65.9, 2.2), 6:  (67.6, 2.3), 7:  (69.2, 2.3),
+            8:  (70.6, 2.3), 9:  (72.0, 2.4), 10: (73.3, 2.4), 11: (74.5, 2.5),
+            12: (75.7, 2.6), 13: (76.9, 2.6), 14: (78.0, 2.7), 15: (79.1, 2.7),
+            16: (80.2, 2.8), 17: (81.2, 2.8), 18: (82.3, 2.8), 19: (83.2, 2.9),
+            20: (84.2, 2.9), 21: (85.1, 3.0), 22: (86.0, 3.0), 23: (86.9, 3.1),
+            24: (87.8, 3.1), 25: (88.6, 3.2), 26: (89.4, 3.2), 27: (90.3, 3.3),
+            28: (91.1, 3.3), 29: (91.9, 3.4), 30: (92.7, 3.4), 31: (93.4, 3.5),
+            32: (94.2, 3.5),
+        }
+        who_girls = {
+            0:  (49.1, 1.9), 1:  (53.7, 2.0), 2:  (57.1, 2.1), 3:  (59.8, 2.1),
+            4:  (62.1, 2.2), 5:  (64.0, 2.2), 6:  (65.7, 2.3), 7:  (67.3, 2.3),
+            8:  (68.7, 2.3), 9:  (70.1, 2.4), 10: (71.5, 2.4), 11: (72.8, 2.5),
+            12: (74.0, 2.5), 13: (75.2, 2.6), 14: (76.4, 2.6), 15: (77.5, 2.7),
+            16: (78.6, 2.7), 17: (79.7, 2.8), 18: (80.7, 2.8), 19: (81.7, 2.9),
+            20: (82.7, 2.9), 21: (83.7, 2.9), 22: (84.6, 3.0), 23: (85.5, 3.0),
+            24: (86.4, 3.1), 25: (87.3, 3.1), 26: (88.1, 3.2), 27: (89.0, 3.2),
+            28: (89.8, 3.3), 29: (90.6, 3.3), 30: (91.4, 3.4), 31: (92.2, 3.4),
+            32: (93.0, 3.5),
+        }
+
+        # Hitung z-score WHO
+        age_int = int(round(age))
+        who_table = who_boys if sex == 0 else who_girls
+        median, sd = who_table.get(age_int, (None, None))
+
+        who_label  = None
+        who_zscore = None
+        if median and sd:
+            who_zscore = (height - median) / sd
+            if who_zscore < -3:
+                who_label = "Sangat Pendek"
+            elif who_zscore < -2:
+                who_label = "Pendek"
+            elif who_zscore <= 2:
+                who_label = "Normal"
+            else:
+                who_label = "Tinggi"
+
+        # ── Prediksi KNN ─────────────────────────────────────────────────────
+        # Urutan fitur sesuai scaler: Umur, Jenis Kelamin, Tinggi Badan
         features = pd.DataFrame([[age, sex, height]],
                                 columns=["Umur", "Jenis Kelamin", "Tinggi Badan"])
-
         features_scaled = scaler_stunting.transform(features)
         pred = int(model_stunting.predict(features_scaled)[0])
         try:
@@ -67,14 +110,23 @@ def predict_stunting():
 
         # LabelEncoder urutan alfabetis scikit-learn dari nama kelas asli dataset:
         # 'normal'=0, 'severely stunted'=1, 'stunted'=2, 'tinggi'=3
-        # Mapping ke label Indonesia:
         labels = {
             0: "Normal",
-            1: "Sangat Pendek",   # severely stunted
-            2: "Pendek",          # stunted
+            1: "Sangat Pendek",
+            2: "Pendek",
             3: "Tinggi"
         }
-        label = labels.get(pred, str(pred))
+        knn_label = labels.get(pred, str(pred))
+
+        # ── LOGIKA FINAL: WHO override jika z-score ekstrem ──────────────────
+        # Jika WHO dan KNN tidak sepakat DAN z-score sangat ekstrem → pakai WHO
+        if who_label and who_label != knn_label:
+            if who_zscore is not None and (who_zscore < -2.5 or who_zscore > 2.5):
+                final_label = who_label  # WHO menang untuk kasus ekstrem
+            else:
+                final_label = knn_label  # KNN menang untuk kasus borderline
+        else:
+            final_label = knn_label
 
         tips_map = {
             "Sangat Pendek": [
@@ -108,9 +160,11 @@ def predict_stunting():
         return jsonify({
             "status": "ok",
             "prediction": pred,
-            "label": label,
+            "label": final_label,
             "confidence": round(proba * 100, 1) if proba is not None else None,
-            "tips": tips_map.get(label, []),
+            "who_zscore": round(who_zscore, 2) if who_zscore is not None else None,
+            "who_label": who_label,
+            "tips": tips_map.get(final_label, []),
             "inputs": {"age_bulan": age, "height_cm": height, "sex": "Laki-laki" if sex == 0 else "Perempuan"},
         })
     except Exception as e:
@@ -147,7 +201,6 @@ def predict_diabetes():
         if gender not in (0, 1):
             return jsonify({"status": "error", "message": "Gender tidak valid."}), 400
 
-        # Pastikan model sudah termuat — TIDAK ada fallback manual
         if not model_diabetes or not scaler_diabetes:
             return jsonify({
                 "status": "error",
@@ -251,8 +304,8 @@ def download_pdf():
         story.append(Spacer(1, 0.6*cm))
 
         # Result badge
-        label = data.get("label", "-")
-        conf  = data.get("confidence", 0)
+        label     = data.get("label", "-")
+        conf      = data.get("confidence", 0)
         pred_type = data.get("type", "Prediksi")
         story.append(Paragraph(f"<b>Jenis Prediksi:</b> {pred_type}", styles["Normal"]))
         story.append(Paragraph(f"<b>Hasil:</b> {label}", styles["Normal"]))
@@ -267,12 +320,12 @@ def download_pdf():
             table_data = [["Parameter", "Nilai"]] + [[k, str(v)] for k, v in inputs.items()]
             t = Table(table_data, colWidths=[8*cm, 8*cm])
             t.setStyle(TableStyle([
-                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#0ea5e9")),
-                ("TEXTCOLOR",  (0,0), (-1,0), colors.white),
-                ("ALIGN",      (0,0), (-1,-1), "CENTER"),
-                ("FONTNAME",   (0,0), (-1,0), "Helvetica-Bold"),
-                ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.white, colors.HexColor("#f0f9ff")]),
-                ("GRID",       (0,0), (-1,-1), 0.5, colors.HexColor("#bae6fd")),
+                ("BACKGROUND",     (0, 0), (-1, 0), colors.HexColor("#0ea5e9")),
+                ("TEXTCOLOR",      (0, 0), (-1, 0), colors.white),
+                ("ALIGN",          (0, 0), (-1, -1), "CENTER"),
+                ("FONTNAME",       (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f0f9ff")]),
+                ("GRID",           (0, 0), (-1, -1), 0.5, colors.HexColor("#bae6fd")),
             ]))
             story.append(t)
             story.append(Spacer(1, 0.4*cm))
