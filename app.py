@@ -16,8 +16,8 @@ def load(name):
         return joblib.load(path)
     return None
 
-model_stunting  = load("model_knn_stunting.pkl")
-scaler_stunting = load("scaler.pkl")        # fitur: Umur, Jenis Kelamin, Tinggi Badan (3 fitur)
+model_stunting  = load("model_knn_stunting(1).pkl")
+scaler_stunting = load("scaler(2).pkl")        # fitur: Umur, Jenis Kelamin, Tinggi Badan (3 fitur)
 model_diabetes  = load("model_knn_diabetes.pkl")
 scaler_diabetes = load("scaler_1.pkl")      # fitur: gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level, blood_glucose_level (8 fitur)
 le_smoking      = load("le.pkl")            # LabelEncoder untuk smoking_history
